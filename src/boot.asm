@@ -2,20 +2,31 @@ org 0x7C00
 
 %define ball_size 2
 
-mov ah, 0x0E
 mov bx, welcome_message
-print_loop:
-  mov al, [bx]
-  int 0x10
-  inc bx
-  cmp al, 0
-  jne print_loop
+
+mov ah, 0x0E
+print_loop:     ;do{
+  mov al, [bx] 
+  int 0x10        ;printc(*bx);
+  inc bx          ;bx++,
+  cmp al, 0x00
+  jne print_loop;}while(*bx =!= 0x00);
 
 mov ah, 0x00
 int 0x16
 
 mov ax, 0x0004
 int 0x10      ;set_video_mode(0x04) more info at: https://www.minuszerodegrees.net/video/bios_video_modes.htm
+
+mov bx, 320
+call random
+mov bx, [random_number]
+mov [ball_x], bx
+
+mov bx, 200
+call random
+mov bx, [random_number]
+mov [ball_y], bx
 
 loop:
   mov al, 0x00
@@ -30,6 +41,17 @@ loop:
     cmp al, 100
     jne wait_loop
   jmp loop
+
+random:
+  mov ah, 0x00
+  int 0x1A    ;Get system time and return on cx and dx.
+
+  mov ax, dx
+  xor dx, dx
+  div bx
+
+  mov [random_number], dx
+  ret
 
 update_ball:
   mov ax, [ball_x]
@@ -73,6 +95,7 @@ ball_x: dw 0x0000
 ball_y: dw 0x0000
 ball_velocity_x: dw 0x0001
 ball_velocity_y: dw 0x0001
+random_number: dw 0x0000
 color: db 0x0F
 welcome_message:
   db "Press any key to continue!", 0x00
